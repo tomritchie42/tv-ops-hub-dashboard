@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WPE Transport Dashboard | TransVirtual TMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* =========================== RESET & BASE STYLES =========================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* =========================== TYPOGRAPHY =========================== */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #f1f5f9;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            color: #f1f5f9;
+        }
+
+        h3 {
+            font-size: 1.125rem;
+            color: #cbd5e1;
+        }
+
+        /* =========================== TOP NAVIGATION BAR =========================== */
+        .navbar {
+            background-color: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .navbar-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e40af;
+            margin-right: 2rem;
+            white-space: nowrap;
+        }
+
+        .navbar-brand svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            flex: 1;
+            align-items: center;
+        }
+
+        .nav-tab {
+            padding: 0.65rem 1rem;
+            border: none;
+            background-color: transparent;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .nav-tab:hover {
+            color: #cbd5e1;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-tab.active {
+            color: #1e40af;
+            border-bottom-color: #f97316;
+            background-color: rgba(30, 64, 175, 0.1);
+        }
+
+        .score-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .score-badge.green {
+            background-color: #10b981;
+        }
+
+        .score-badge.amber {
+            background-color: #f59e0b;
+        }
+
+        .score-badge.red {
+            background-color: #ef4444;
+        }
+
+        .navbar-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-flex;
+            width: 50px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #475569;
+            transition: 0.3s;
+            border-radius: 28px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #1e40af;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        .last-updated {
+            font-size: 0.8rem;
+            color: #64748b;
+            white-space: nowrap;
+        }
+
+        /* =========================== MAIN CONTAINER =========================== */
+        .main-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* =========================== PAGE HEADER =========================== */
+        .page-header {
+            margin-bottom: 2rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .page-header h1 {
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtext {
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+
+        /* =========================== ALL HUBS SUMMARY =========================== */
+        .company-summary {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .summary-card {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .summary-label {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .summary-trend {
+            font-size: 0.85rem;
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .summary-trend.down {
+            color: #ef4444;
+        }
+
+        /* =========================== HUB CARDS GRID =========================== */
+        .hubs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .hub-card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .hub-card:hover {
+            border-color: #1e40af;
+            box-shadow: 0 10px 25px rgba(30, 64, 175, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .hub-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hub-card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .hub-card-score-container {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .circular-gauge {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .circular-gauge svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .gauge-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .gauge-score {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .gauge-label {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-top: 0.2rem;
+        }
+
+        .hub-card-kpis {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .kpi-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .kpi-label {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .kpi-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .kpi-value.critical {
+            color: #ef4444;
+        }
+
+        .hub-card-sparkline {
+            height: 30px;
+            canvas {
+                max-height: 30px;
+            }
+        }
+
+        /* =========================== HUB PAGE LAYOUT =========================== */
+        .hub-page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .hub-page.active {
+            display: block;
+        }
+
+        .hub-header {
+            display: flex;
+            align-items: flex-end;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .hub-title-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .hub-name {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .trend-arrow {
+            font-size: 1.5rem;
+            margin-left: 0.5rem;
+        }
+
+        .trend-arrow.up {
+            color: #10b981;
+        }
+
+        .trend-arrow.down {
+            color: #ef4444;
+        }
+
+        .trend-arrow.stable {
+            color: #f59e0b;
+        }
+
+        .hub-score-container {
+            width: 140px;
+            height: 140px;
+        }
+
+        .hub-score-status {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+        }
+
+        /* =========================== KPI CARDS =========================== */
+        .kpi-cards-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .kpi-card.critical {
+            border-color: #ef4444;
+            background-color: rgba(239, 68, 68, 0.05);
+        }
+
+        .kpi-card-label {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .kpi-card.critical .kpi-card-value {
+            color: #ef4444;
+        }
+
+        .kpi-card-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .kpi-card-trend.positive {
+            color: #10b981;
+        }
+
+        .kpi-card-trend.negative {
+            color: #ef4444;
+        }
+
+        /* =========================== PROBLEM FREIGHT =========================== */
+        .problem-freight {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .problem-freight h3 {
+            margin-bottom: 1rem;
+        }
+
+        .problem-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+
+        .problem-item {
+            background-color: #0f172a;
+            border-left: 4px solid;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .problem-item.critical {
+            border-left-color: #ef4444;
+        }
+
+        .problem-item.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .problem-item.info {
+            border-left-color: #3b82f6;
+        }
+
+        .problem-item-label {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .problem-item-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .problem-item.critical .problem-item-value {
+            color: #ef4444;
+        }
+
+        .problem-item.warning .problem-item-value {
+            color: #f59e0b;
+        }
+
+        /* =========================== CHARTS SECTION =========================== */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .chart-canvas-wrapper {
+            position: relative;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            max-height: 300px;
+        }
+
+        /* =========================== CONSIGNMENT TABLE =========================== */
+        .consignment-section {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .consignment-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.75rem 1rem;
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #1e40af;
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+
+        .filter-select {
+            padding: 0.75rem 1rem;
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #1e40af;
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background-color: #0f172a;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #cbd5e1;
+            border-bottom: 2px solid #334155;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        th:hover {
+            background-color: #1a202c;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #334155;
+            color: #cbd5e1;
+        }
+
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        tr.floor-scanned {
+            background-color: rgba(239, 68, 68, 0.08) !important;
+        }
+
+        tr.floor-scanned td {
+            color: #fca5a5;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.35rem 0.75rem;
+            border-radius: 0.35rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .status-badge.pickup-received {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+        }
+
+        .status-badge.created {
+            background-color: rgba(148, 163, 184, 0.2);
+            color: #cbd5e1;
+        }
+
+        .status-badge.assigned {
+            background-color: rgba(148, 163, 184, 0.2);
+            color: #cbd5e1;
+        }
+
+        .status-badge.in-transit {
+            background-color: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+
+        .status-badge.in-depot {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+        }
+
+        .status-badge.on-delivery {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+        }
+
+        .status-badge.delivered {
+            background-color: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+
+        .status-badge.floor {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 0.75rem;
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: #cbd5e1;
+            border-radius: 0.35rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background-color: #1e293b;
+            border-color: #1e40af;
+            color: #e2e8f0;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination button.active {
+            background-color: #1e40af;
+            border-color: #1e40af;
+            color: white;
+        }
+
+        /* =========================== ANIMATIONS =========================== */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* =========================== UTILITIES =========================== */
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .error-message {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .success-message {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            color: #86efac;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* =========================== RESPONSIVE =========================== */
+        @media (max-width: 1024px) {
+            .main-container {
+                padding: 1.5rem;
+            }
+
+            .hubs-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+
+            .hub-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .navbar-container {
+                flex-wrap: wrap;
+            }
+
+            .navbar-brand {
+                margin-right: 1rem;
+            }
+
+            .nav-tabs {
+                order: 3;
+                width: 100%;
+                margin-top: 1rem;
+            }
+
+            .navbar-controls {
+                order: 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .hub-name {
+                font-size: 1.75rem;
+            }
+
+            .hubs-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hub-card-kpis {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-cards-row {
+                grid-template-columns: 1fr;
+            }
+
+            .consignment-controls {
+                flex-direction: column;
+            }
+
+            .search-box {
+                min-width: unset;
+            }
+
+            table {
+                font-size: 0.8rem;
+            }
+
+            th, td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .status-badge {
+                padding: 0.3rem 0.6rem;
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- TOP NAVIGATION -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 11l3 3L22 4"></path>
+                    <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                WPE Dashboard
+            </div>
+            <div class="nav-tabs" id="navTabs"></div>
+            <div class="navbar-controls">
+                <div class="toggle-switch">
+                    <span>Mock Data</span>
+                    <label class="switch">
+                        <input type="checkbox" id="dataToggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span>Live API</span>
+                </div>
+                <div class="last-updated" id="lastUpdated">Last updated: now</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-container">
+        <!-- ALL HUBS PAGE -->
+        <div id="allHubsPage" class="hub-page active">
+            <div class="page-header">
+                <h1>All Hubs Overview</h1>
+                <p class="page-subtext">Real-time performance metrics across all WPE transport hubs</p>
+            </div>
+
+            <div class="company-summary" id="companySummary"></div>
+
+            <div class="hubs-grid" id="hubsGrid"></div>
+        </div>
+
+        <!-- INDIVIDUAL HUB PAGES (will be generated dynamically) -->
+        <div id="hubPagesContainer"></div>
+    </div>
+
+    <script>
+        // =========================== APPLICATION STATE ===========================
+        const APP = {
+            currentHub: 'all',
+            dataMode: 'mock', // 'mock' or 'live'
+            charts: {},
+            chartInstances: {},
+            refreshInterval: null,
+            lastUpdateTime: Date.now(),
+            hubs: ['melbourne', 'brisbane', 'sydney', 'dubbo', 'newcastle', 'cobar', 'perth'],
+            hubLabels: {
+                'melbourne': 'Melbourne',
+                'brisbane': 'Brisbane',
+                'sydney': 'Sydney',
+                'dubbo': 'Dubbo',
+                'newcastle': 'Newcastle',
+                'cobar': 'Cobar',
+                'perth': 'Perth'
+            },
+            hubAbbreviations: {
+                'melbourne': 'MEL',
+                'brisbane': 'BNE',
+                'sydney': 'SYD',
+                'dubbo': 'DBO',
+                'newcastle': 'NCL',
+                'cobar': 'COB',
+                'perth': 'PER'
+            }
+        };
+
+        // =========================== MOCK DATA GENERATOR ===========================
+        const MOCK_DATA = {
+            customers: [
+                'PETstock Pty Ltd',
+                'Motus Transport',
+                'Peak Gold Mines',
+                'Stratex',
+                'QMW Industries',
+                'Polyaire Pty Ltd',
+                'Standard Account',
+                'Cobar Management',
+                'Tomingley Gold Operations',
+                'Byo Cellars',
+                'ALS Orange'
+            ],
+            services: ['Standard', 'Standard - Petstock', 'Express'],
+            routes: {
+                'melbourne': [
+                    { to: 'brisbane', label: 'MEL → BNE' },
+                    { to: 'sydney', label: 'MEL → SYD' },
+                    { to: 'perth', label: 'MEL → PER' },
+                    { to: 'cobar', label: 'MEL → COB' },
+                    { to: 'dubbo', label: 'MEL → DBO' },
+                    { to: 'newcastle', label: 'MEL → NCL' }
+                ],
+                'brisbane': [
+                    { to: 'melbourne', label: 'BNE → MEL' },
+                    { to: 'sydney', label: 'BNE → SYD' },
+                    { to: 'sydney', label: 'BNE → QLD' }
+                ],
+                'sydney': [
+                    { to: 'melbourne', label: 'SYD → MEL' },
+                    { to: 'brisbane', label: 'SYD → BNE' },
+                    { to: 'newcastle', label: 'SYD → NCL' },
+                    { to: 'dubbo', label: 'SYD → DBO' }
+                ],
+                'perth': [
+                    { to: 'melbourne', label: 'PER → MEL' },
+                    { to: 'cobar', label: 'PER → COB' }
+                ],
+                'cobar': [
+                    { to: 'melbourne', label: 'COB → MEL' },
+                    { to: 'perth', label: 'COB → PER' }
+                ],
+                'dubbo': [
+                    { to: 'melbourne', label: 'DBO → MEL' },
+                    { to: 'sydney', label: 'DBO → SYD' }
+                ],
+                'newcastle': [
+                    { to: 'melbourne', label: 'NCL → MEL' },
+                    { to: 'sydney', label: 'NCL → SYD' }
+                ]
+            },
+            consignmentPrefixes: ['PET', 'MOT', 'PEAK', 'STR', 'QMW', 'POL', 'STD', 'COB', 'TGO', 'BYO', 'ALS'],
+            statuses: ['PickupReceived', 'Created', 'Assigned', 'InTransit', 'InDepot', 'OnDelivery', 'Delivered', 'Floor'],
+
+            generateConsignmentNumber: function(seed) {
+                const prefixes = this.consignmentPrefixes;
+                const prefix = prefixes[seed % prefixes.length];
+                const number = Math.floor(100000 + (seed * 999) % 900000);
+                return prefix + number;
+            },
+
+            generateConsignment: function(hubId, index, seed) {
+                const now = new Date();
+                const date = new Date(now.getTime() - Math.random() * 24 * 60 * 60 * 1000);
+                const routes = this.routes[hubId] || [];
+                const route = routes[seed % routes.length] || { to: 'sydney', label: hubId + ' → Sydney' };
+
+                // Each hub both sends AND receives. ~50% of consignments are inbound (receiving)
+                const isInbound = Math.random() < 0.45;
+                const sendingHub = isInbound ? route.to : hubId;
+                const receivingHub = isInbound ? hubId : route.to;
+                const sendLabel = APP.hubAbbreviations[sendingHub] || sendingHub.toUpperCase().substring(0,3);
+                const recvLabel = APP.hubAbbreviations[receivingHub] || receivingHub.toUpperCase().substring(0,3);
+
+                const isFloorScanned = Math.random() < (hubId === 'melbourne' ? 0.08 : hubId === 'sydney' ? 0.15 : 0.05);
+                const status = isFloorScanned ? 'Floor' : this.statuses[Math.floor(Math.random() * (this.statuses.length - 1))];
+
+                return {
+                    consignmentNumber: this.generateConsignmentNumber(seed + index),
+                    date: date.toISOString().split('T')[0],
+                    customer: this.customers[seed % this.customers.length],
+                    route: sendLabel + ' → ' + recvLabel,
+                    sendingHub: sendingHub,
+                    receivingHub: receivingHub,
+                    direction: isInbound ? 'inbound' : 'outbound',
+                    service: this.services[seed % this.services.length],
+                    quantity: Math.floor(1 + Math.random() * 50),
+                    weight: Math.floor(1 + Math.random() * 5000),
+                    status: status
+                };
+            },
+
+            generateScoreHistory: function(baseScore, days = 30) {
+                const history = [];
+                for (let i = days - 1; i >= 0; i--) {
+                    const variation = (Math.random() - 0.5) * 20;
+                    let score = Math.max(0, Math.min(100, baseScore + variation));
+                    if (i % 7 === 0) score = Math.max(score - 5, 0);
+                    history.push({
+                        date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        score: Math.round(score)
+                    });
+                }
+                return history;
+            },
+
+            generateHubData: function(hubId) {
+                const seed = hubId.charCodeAt(0);
+                const baseScore = 45 + (seed % 55);
+                const floorScannedCount = Math.floor(2 + Math.random() * 4);
+                const totalConsignments = 20 + Math.floor(Math.random() * 25);
+                const deliveredCount = Math.floor(totalConsignments * (0.6 + Math.random() * 0.3));
+
+                const consignments = [];
+                for (let i = 0; i < totalConsignments; i++) {
+                    consignments.push(this.generateConsignment(hubId, i, seed * (i + 1)));
+                }
+
+                const inboundCount = consignments.filter(c => c.direction === 'inbound').length;
+                const outboundCount = consignments.filter(c => c.direction === 'outbound').length;
+
+                return {
+                    hubId: hubId,
+                    label: APP.hubLabels[hubId],
+                    abbreviation: APP.hubAbbreviations[hubId],
+                    score: baseScore,
+                    scoreHistory: this.generateScoreHistory(baseScore),
+                    floorScanned: floorScannedCount,
+                    totalConsignments: totalConsignments,
+                    inboundCount: inboundCount,
+                    outboundCount: outboundCount,
+                    inDepot: Math.floor(totalConsignments * 0.2),
+                    onDelivery: Math.floor(totalConsignments * 0.15),
+                    delivered: deliveredCount,
+                    pickupReceived: Math.floor(totalConsignments * 0.3),
+                    misdirected: Math.floor(Math.random() * 3),
+                    damaged: Math.floor(Math.random() * 2),
+                    short: Math.floor(Math.random() * 2),
+                    consignments: consignments
+                };
+            }
+        };
+
+        // =========================== SCORE CALCULATION ===========================
+        function calculateScore(hubData) {
+            const metrics = {
+                onTimeDelivery: 0.75 + Math.random() * 0.2,
+                floorScanRate: 0.05 + Math.random() * 0.1,
+                scanCompliance: 0.80 + Math.random() * 0.15,
+                damageRate: 0.02 + Math.random() * 0.05
+            };
+
+            const score = (
+                metrics.onTimeDelivery * 30 +
+                (1 - metrics.floorScanRate) * 30 +
+                metrics.scanCompliance * 20 +
+                (1 - metrics.damageRate) * 20
+            );
+
+            return Math.round(Math.max(0, Math.min(100, score)));
+        }
+
+        function getScoreColor(score) {
+            if (score >= 80) return '#10b981';
+            if (score >= 60) return '#f59e0b';
+            return '#ef4444';
+        }
+
+        function getScoreStatus(score) {
+            if (score >= 80) return 'green';
+            if (score >= 60) return 'amber';
+            return 'red';
+        }
+
+        // =========================== CIRCULAR GAUGE RENDERER ===========================
+        function createCircularGauge(score, size = 100) {
+            const radius = size / 2 - 5;
+            const circumference = 2 * Math.PI * radius;
+            const strokeDashoffset = circumference - (score / 100) * circumference;
+            const color = getScoreColor(score);
+
+            const svg = `
+                <svg viewBox="0 0 ${size} ${size}" style="width:${size}px;height:${size}px;">
+                    <circle cx="${size/2}" cy="${size/2}" r="${radius}" fill="none" stroke="#334155" stroke-width="2"/>
+                    <circle
+                        cx="${size/2}"
+                        cy="${size/2}"
+                        r="${radius}"
+                        fill="none"
+                        stroke="${color}"
+                        stroke-width="3"
+                        stroke-dasharray="${circumference}"
+                        stroke-dashoffset="${strokeDashoffset}"
+                        stroke-linecap="round"
+                        style="transition: stroke-dashoffset 0.5s ease;"
+                    />
+                </svg>
+            `;
+
+            return svg;
+        }
+
+        // =========================== UI RENDERING ===========================
+        function renderNavigation() {
+            const navTabs = document.getElementById('navTabs');
+            navTabs.innerHTML = '';
+
+            // All Hubs tab
+            const allHubsTab = document.createElement('button');
+            allHubsTab.className = 'nav-tab active';
+            allHubsTab.textContent = 'All Hubs';
+            allHubsTab.onclick = () => navigateToHub('all');
+            navTabs.appendChild(allHubsTab);
+
+            // Hub tabs with score badges
+            APP.hubs.forEach(hubId => {
+                const hubData = APP.data[hubId];
+                const tab = document.createElement('button');
+                tab.className = 'nav-tab';
+                tab.dataset.hub = hubId;
+
+                const scoreStatus = getScoreStatus(hubData.score);
+                const badge = `<span class="score-badge ${scoreStatus}">${hubData.score}</span>`;
+
+                tab.innerHTML = `${APP.hubLabels[hubId]} ${badge}`;
+                tab.onclick = () => navigateToHub(hubId);
+                navTabs.appendChild(tab);
+            });
+        }
+
+        function renderAllHubsPage() {
+            const allHubsPage = document.getElementById('allHubsPage');
+
+            // Company Summary
+            let totalConsignments = 0;
+            let totalDelivered = 0;
+            let totalFloorScanned = 0;
+            let avgScore = 0;
+
+            APP.hubs.forEach(hubId => {
+                const hubData = APP.data[hubId];
+                totalConsignments += hubData.totalConsignments;
+                totalDelivered += hubData.delivered;
+                totalFloorScanned += hubData.floorScanned;
+                avgScore += hubData.score;
+            });
+
+            avgScore = Math.round(avgScore / APP.hubs.length);
+
+            const summarySummary = document.getElementById('companySummary');
+            summarySummary.innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-label">Average Performance Score</div>
+                    <div class="summary-value">${avgScore}</div>
+                    <div class="summary-trend">Across all hubs</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Total Consignments</div>
+                    <div class="summary-value">${totalConsignments}</div>
+                    <div class="summary-trend">All hubs today</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Delivered Today</div>
+                    <div class="summary-value">${totalDelivered}</div>
+                    <div class="summary-trend">${Math.round(totalDelivered / totalConsignments * 100)}% completion</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Floor Scanned Alert</div>
+                    <div class="summary-value" style="color: #ef4444;">${totalFloorScanned}</div>
+                    <div class="summary-trend">Items requiring attention</div>
+                </div>
+            `;
+
+            // Hub Cards Grid
+            const hubsGrid = document.getElementById('hubsGrid');
+            const sortedHubs = [...APP.hubs].sort((a, b) =>
+                APP.data[a].score - APP.data[b].score
+            );
+
+            hubsGrid.innerHTML = sortedHubs.map(hubId => {
+                const hubData = APP.data[hubId];
+                const scoreColor = getScoreColor(hubData.score);
+                const last7Days = hubData.scoreHistory.slice(-7);
+                const trend = last7Days[last7Days.length - 1].score - last7Days[0].score;
+
+                return `
+                    <div class="hub-card" onclick="navigateToHub('${hubId}')">
+                        <div class="hub-card-header">
+                            <div class="hub-card-title">${hubData.label}</div>
+                            <div class="hub-card-score-container">
+                                <div class="circular-gauge">
+                                    ${createCircularGauge(hubData.score, 80)}
+                                    <div class="gauge-text">
+                                        <div class="gauge-score">${hubData.score}</div>
+                                        <div class="gauge-label">Score</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="hub-card-kpis">
+                            <div class="kpi-item">
+                                <div class="kpi-label">Floor Scanned</div>
+                                <div class="kpi-value ${hubData.floorScanned > 0 ? 'critical' : ''}">${hubData.floorScanned}</div>
+                            </div>
+                            <div class="kpi-item">
+                                <div class="kpi-label">Total (In/Out)</div>
+                                <div class="kpi-value">${hubData.totalConsignments} <span style="font-size:0.6em;color:#94a3b8">(${hubData.inboundCount || 0}/${hubData.outboundCount || 0})</span></div>
+                            </div>
+                            <div class="kpi-item">
+                                <div class="kpi-label">On Delivery</div>
+                                <div class="kpi-value">${hubData.onDelivery}</div>
+                            </div>
+                            <div class="kpi-item">
+                                <div class="kpi-label">Delivered</div>
+                                <div class="kpi-value">${hubData.delivered}</div>
+                            </div>
+                        </div>
+
+                        <div class="hub-card-sparkline">
+                            <canvas id="sparkline-${hubId}"></canvas>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Render sparklines
+            setTimeout(() => {
+                sortedHubs.forEach(hubId => {
+                    const hubData = APP.data[hubId];
+                    const canvas = document.getElementById(`sparkline-${hubId}`);
+                    if (canvas && canvas.getContext) {
+                        renderSparkline(canvas, hubData.scoreHistory);
+                    }
+                });
+            }, 100);
+        }
+
+        function renderSparkline(canvas, scoreHistory) {
+            const ctx = canvas.getContext('2d');
+            const data = scoreHistory.map(h => h.score);
+            const width = canvas.clientWidth || 350;
+            const height = 30;
+            canvas.width = width;
+            canvas.height = height;
+
+            const minScore = Math.min(...data);
+            const maxScore = Math.max(...data);
+            const range = maxScore - minScore || 1;
+
+            ctx.strokeStyle = '#1e40af';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            data.forEach((score, idx) => {
+                const x = (idx / (data.length - 1)) * width;
+                const y = height - ((score - minScore) / range) * (height - 4) - 2;
+                if (idx === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+
+            ctx.stroke();
+        }
+
+        function renderHubPage(hubId) {
+            const hubData = APP.data[hubId];
+            const scoreStatus = getScoreStatus(hubData.score);
+            const last30 = hubData.scoreHistory;
+            const scoreChange = last30[last30.length - 1].score - last30[0].score;
+            const trendArrow = scoreChange > 2 ? '↑' : scoreChange < -2 ? '↓' : '→';
+            const trendClass = scoreChange > 0 ? 'up' : scoreChange < 0 ? 'down' : 'stable';
+
+            const hubPageHTML = `
+                <div id="hub-${hubId}" class="hub-page">
+                    <div class="page-header">
+                        <div class="hub-header">
+                            <div class="hub-title-section">
+                                <h1 class="hub-name">${hubData.label}</h1>
+                                <span class="trend-arrow ${trendClass}">${trendArrow}</span>
+                            </div>
+                            <div class="hub-score-container">
+                                <div class="circular-gauge">
+                                    ${createCircularGauge(hubData.score, 140)}
+                                    <div class="gauge-text">
+                                        <div class="gauge-score">${hubData.score}</div>
+                                        <div class="gauge-label">Performance</div>
+                                    </div>
+                                </div>
+                                <div class="hub-score-status">
+                                    ${scoreStatus === 'green' ? '✓ Excellent' : scoreStatus === 'amber' ? '⚠ Needs Attention' : '✗ Critical'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-cards-row">
+                        <div class="kpi-card critical">
+                            <div class="kpi-card-label">Floor Scanned Freight</div>
+                            <div class="kpi-card-value">${hubData.floorScanned}</div>
+                            <div class="kpi-card-trend negative">Alert: Items requiring attention</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-card-label">Total Consignments</div>
+                            <div class="kpi-card-value">${hubData.totalConsignments}</div>
+                            <div class="kpi-card-trend">📥 ${hubData.inboundCount || 0} in · 📤 ${hubData.outboundCount || 0} out</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-card-label">In Depot</div>
+                            <div class="kpi-card-value">${hubData.inDepot}</div>
+                            <div class="kpi-card-trend">${Math.round(hubData.inDepot / hubData.totalConsignments * 100)}% of total</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-card-label">On Delivery</div>
+                            <div class="kpi-card-value">${hubData.onDelivery}</div>
+                            <div class="kpi-card-trend">${Math.round(hubData.onDelivery / hubData.totalConsignments * 100)}% of total</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-card-label">Delivered Today</div>
+                            <div class="kpi-card-value">${hubData.delivered}</div>
+                            <div class="kpi-card-trend positive">${Math.round(hubData.delivered / hubData.totalConsignments * 100)}% completion</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-card-label">Pickup Received</div>
+                            <div class="kpi-card-value">${hubData.pickupReceived}</div>
+                            <div class="kpi-card-trend">${Math.round(hubData.pickupReceived / hubData.totalConsignments * 100)}% of total</div>
+                        </div>
+                    </div>
+
+                    <div class="problem-freight">
+                        <h3>Problem Freight Summary</h3>
+                        <div class="problem-items">
+                            <div class="problem-item critical">
+                                <div class="problem-item-label">Floor Scanned</div>
+                                <div class="problem-item-value">${hubData.floorScanned}</div>
+                            </div>
+                            <div class="problem-item warning">
+                                <div class="problem-item-label">Misdirected</div>
+                                <div class="problem-item-value">${hubData.misdirected}</div>
+                            </div>
+                            <div class="problem-item info">
+                                <div class="problem-item-label">Damaged</div>
+                                <div class="problem-item-value">${hubData.damaged}</div>
+                            </div>
+                            <div class="problem-item info">
+                                <div class="problem-item-label">Short</div>
+                                <div class="problem-item-value">${hubData.short}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-section">
+                        <div class="chart-container">
+                            <h3 class="chart-title">Consignment Volume (Last 7 Days)</h3>
+                            <div class="chart-canvas-wrapper">
+                                <canvas id="chart-volume-${hubId}"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <h3 class="chart-title">Status Breakdown</h3>
+                            <div class="chart-canvas-wrapper">
+                                <canvas id="chart-status-${hubId}"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <h3 class="chart-title">Floor Scanned Trend (14 Days)</h3>
+                            <div class="chart-canvas-wrapper">
+                                <canvas id="chart-floor-${hubId}"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <h3 class="chart-title">Performance Score History</h3>
+                            <div class="chart-canvas-wrapper">
+                                <canvas id="chart-score-${hubId}"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="consignment-section">
+                        <h3 class="chart-title" style="margin-bottom: 1rem;">Live Consignments</h3>
+
+                        <div class="consignment-controls">
+                            <input type="text" class="search-box" id="search-${hubId}" placeholder="Search consignment number, customer, status...">
+                            <select class="filter-select" id="filter-${hubId}">
+                                <option value="">All Statuses</option>
+                                <option value="Floor">Floor Scanned</option>
+                                <option value="PickupReceived">Pickup Received</option>
+                                <option value="Created">Created</option>
+                                <option value="Assigned">Assigned</option>
+                                <option value="InTransit">In Transit</option>
+                                <option value="InDepot">In Depot</option>
+                                <option value="OnDelivery">On Delivery</option>
+                                <option value="Delivered">Delivered</option>
+                            </select>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table id="table-${hubId}">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable('${hubId}', 'consignmentNumber')">Consign #</th>
+                                        <th onclick="sortTable('${hubId}', 'date')">Date</th>
+                                        <th onclick="sortTable('${hubId}', 'customer')">Customer</th>
+                                        <th>From → To</th>
+                                        <th onclick="sortTable('${hubId}', 'service')">Service</th>
+                                        <th onclick="sortTable('${hubId}', 'quantity')">Qty</th>
+                                        <th onclick="sortTable('${hubId}', 'weight')">Weight (kg)</th>
+                                        <th onclick="sortTable('${hubId}', 'status')">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-${hubId}"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="pagination" id="pagination-${hubId}"></div>
+                    </div>
+                </div>
+            `;
+
+            return hubPageHTML;
+        }
+
+        function renderAllHubPages() {
+            const container = document.getElementById('hubPagesContainer');
+            container.innerHTML = APP.hubs.map(hubId => renderHubPage(hubId)).join('');
+
+            // Initialize tables and pagination
+            APP.hubs.forEach(hubId => {
+                updateConsignmentTable(hubId, 1);
+            });
+        }
+
+        // =========================== TABLE MANAGEMENT ===========================
+        let tableState = {};
+
+        function updateConsignmentTable(hubId, page = 1) {
+            const hubData = APP.data[hubId];
+            const searchInput = document.getElementById(`search-${hubId}`);
+            const filterSelect = document.getElementById(`filter-${hubId}`);
+
+            if (!searchInput || !filterSelect) return;
+
+            const searchTerm = searchInput.value.toLowerCase();
+            const statusFilter = filterSelect.value;
+
+            let filtered = hubData.consignments.filter(c => {
+                const matchesSearch = !searchTerm ||
+                    c.consignmentNumber.toLowerCase().includes(searchTerm) ||
+                    c.customer.toLowerCase().includes(searchTerm) ||
+                    c.status.toLowerCase().includes(searchTerm);
+
+                const matchesStatus = !statusFilter || c.status === statusFilter;
+
+                return matchesSearch && matchesStatus;
+            });
+
+            tableState[hubId] = {
+                filtered: filtered,
+                currentPage: page,
+                itemsPerPage: 10
+            };
+
+            renderConsignmentTablePage(hubId, page, filtered);
+        }
+
+        function renderConsignmentTablePage(hubId, page, filtered) {
+            const itemsPerPage = 10;
+            const start = (page - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageItems = filtered.slice(start, end);
+
+            const tbody = document.getElementById(`tbody-${hubId}`);
+            tbody.innerHTML = pageItems.map(c => {
+                const statusClass = c.status.toLowerCase().replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
+                const rowClass = c.status === 'Floor' ? 'floor-scanned' : '';
+
+                const dirIcon = c.direction === 'inbound' ? '📥' : '📤';
+                return `
+                    <tr class="${rowClass}">
+                        <td><strong>${c.consignmentNumber}</strong></td>
+                        <td>${c.date}</td>
+                        <td>${c.customer}</td>
+                        <td>${dirIcon} ${c.route}</td>
+                        <td>${c.service}</td>
+                        <td>${c.quantity}</td>
+                        <td>${c.weight}</td>
+                        <td><span class="status-badge ${statusClass}">${c.status}</span></td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Pagination
+            const totalPages = Math.ceil(filtered.length / itemsPerPage);
+            const paginationDiv = document.getElementById(`pagination-${hubId}`);
+            paginationDiv.innerHTML = '';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.className = i === page ? 'active' : '';
+                btn.onclick = () => renderConsignmentTablePage(hubId, i, filtered);
+                paginationDiv.appendChild(btn);
+            }
+        }
+
+        function sortTable(hubId, field) {
+            const hubData = APP.data[hubId];
+            hubData.consignments.sort((a, b) => {
+                const aVal = a[field];
+                const bVal = b[field];
+                if (typeof aVal === 'number') {
+                    return aVal - bVal;
+                }
+                return String(aVal).localeCompare(String(bVal));
+            });
+            updateConsignmentTable(hubId, 1);
+        }
+
+        // =========================== CHART RENDERING ===========================
+        function renderChartsForHub(hubId) {
+            destroyChartsForHub(hubId);
+
+            const hubData = APP.data[hubId];
+
+            setTimeout(() => {
+                renderVolumeChart(hubId, hubData);
+                renderStatusChart(hubId, hubData);
+                renderFloorTrendChart(hubId, hubData);
+                renderScoreHistoryChart(hubId, hubData);
+            }, 100);
+        }
+
+        function destroyChartsForHub(hubId) {
+            Object.keys(APP.chartInstances).forEach(key => {
+                if (key.includes(hubId)) {
+                    APP.chartInstances[key].destroy();
+                    delete APP.chartInstances[key];
+                }
+            });
+        }
+
+        function renderVolumeChart(hubId, hubData) {
+            const canvas = document.getElementById(`chart-volume-${hubId}`);
+            if (!canvas) return;
+
+            const last7Days = hubData.scoreHistory.slice(-7);
+            const volumes = last7Days.map(h => Math.floor(hubData.totalConsignments * (0.7 + Math.random() * 0.3)));
+
+            const ctx = canvas.getContext('2d');
+            APP.chartInstances[`volume-${hubId}`] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: last7Days.map(h => h.date),
+                    datasets: [{
+                        label: 'Consignments',
+                        data: volumes,
+                        backgroundColor: 'rgba(30, 64, 175, 0.6)',
+                        borderColor: '#1e40af',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderStatusChart(hubId, hubData) {
+            const canvas = document.getElementById(`chart-status-${hubId}`);
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            APP.chartInstances[`status-${hubId}`] = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Delivered', 'On Delivery', 'In Depot', 'In Transit', 'Created', 'Floor Scanned'],
+                    datasets: [{
+                        data: [
+                            hubData.delivered,
+                            hubData.onDelivery,
+                            hubData.inDepot,
+                            Math.floor(hubData.totalConsignments * 0.15),
+                            Math.floor(hubData.totalConsignments * 0.1),
+                            hubData.floorScanned
+                        ],
+                        backgroundColor: [
+                            '#10b981',
+                            '#f59e0b',
+                            '#3b82f6',
+                            '#8b5cf6',
+                            '#64748b',
+                            '#ef4444'
+                        ],
+                        borderColor: '#1e293b',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#cbd5e1', padding: 15 }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderFloorTrendChart(hubId, hubData) {
+            const canvas = document.getElementById(`chart-floor-${hubId}`);
+            if (!canvas) return;
+
+            const last14Days = hubData.scoreHistory.slice(-14);
+            const floorData = last14Days.map(() => Math.floor(Math.random() * hubData.floorScanned + 1));
+
+            const ctx = canvas.getContext('2d');
+            APP.chartInstances[`floor-${hubId}`] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: last14Days.map(h => h.date),
+                    datasets: [{
+                        label: 'Floor Scanned Items',
+                        data: floorData,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ef4444',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderScoreHistoryChart(hubId, hubData) {
+            const canvas = document.getElementById(`chart-score-${hubId}`);
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            APP.chartInstances[`score-${hubId}`] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: hubData.scoreHistory.map(h => h.date),
+                    datasets: [{
+                        label: 'Performance Score',
+                        data: hubData.scoreHistory.map(h => h.score),
+                        borderColor: '#1e40af',
+                        backgroundColor: 'rgba(30, 64, 175, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#1e40af',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // =========================== ROUTING ===========================
+        function navigateToHub(hubId) {
+            APP.currentHub = hubId;
+            window.location.hash = hubId === 'all' ? '#all' : `#${hubId}`;
+
+            // Update navigation
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (!tab.dataset.hub && hubId === 'all') {
+                    tab.classList.add('active');
+                } else if (tab.dataset.hub === hubId) {
+                    tab.classList.add('active');
+                }
+            });
+
+            // Update pages
+            document.querySelectorAll('.hub-page').forEach(page => {
+                page.classList.remove('active');
+            });
+
+            if (hubId === 'all') {
+                document.getElementById('allHubsPage').classList.add('active');
+            } else {
+                const page = document.getElementById(`hub-${hubId}`);
+                if (page) {
+                    page.classList.add('active');
+                    renderChartsForHub(hubId);
+                }
+            }
+        }
+
+        function handleHashChange() {
+            const hash = window.location.hash.slice(1) || 'all';
+            navigateToHub(hash);
+        }
+
+        // =========================== DATA FETCHING ===========================
+        async function fetchLiveData() {
+            try {
+                const response = await fetch('http://localhost:3000/api/consignments');
+                if (!response.ok) throw new Error('Failed to fetch live data');
+
+                const liveData = await response.json();
+
+                // Process live data...
+                APP.dataMode = 'live';
+                updateLastUpdatedTime();
+                renderAllHubsPage();
+
+            } catch (error) {
+                console.error('Live API error:', error);
+                // Fall back to mock data
+                document.getElementById('dataToggle').checked = false;
+            }
+        }
+
+        function loadMockData() {
+            APP.data = {};
+            APP.hubs.forEach(hubId => {
+                APP.data[hubId] = MOCK_DATA.generateHubData(hubId);
+            });
+            APP.dataMode = 'mock';
+            updateLastUpdatedTime();
+        }
+
+        function updateLastUpdatedTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('lastUpdated').textContent = `Last updated: ${timeString}`;
+            APP.lastUpdateTime = Date.now();
+        }
+
+        function setupAutoRefresh() {
+            if (APP.refreshInterval) clearInterval(APP.refreshInterval);
+
+            APP.refreshInterval = setInterval(() => {
+                if (APP.dataMode === 'live') {
+                    fetchLiveData();
+                } else {
+                    // Slight variation in mock data
+                    APP.hubs.forEach(hubId => {
+                        APP.data[hubId].score = Math.max(0, Math.min(100,
+                            APP.data[hubId].score + (Math.random() - 0.5) * 5
+                        ));
+                    });
+                    updateLastUpdatedTime();
+                    renderAllHubsPage();
+                }
+            }, 60000);
+        }
+
+        // =========================== INITIALIZATION ===========================
+        function init() {
+            // Load initial data
+            loadMockData();
+
+            // Render UI
+            renderNavigation();
+            renderAllHubsPage();
+            renderAllHubPages();
+
+            // Setup event listeners
+            document.getElementById('dataToggle').addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    fetchLiveData();
+                } else {
+                    loadMockData();
+                    renderAllHubsPage();
+                }
+            });
+
+            document.addEventListener('hashchange', handleHashChange);
+
+            // Setup search and filter listeners
+            APP.hubs.forEach(hubId => {
+                const searchInput = document.getElementById(`search-${hubId}`);
+                const filterSelect = document.getElementById(`filter-${hubId}`);
+
+                if (searchInput) {
+                    searchInput.addEventListener('input', () => updateConsignmentTable(hubId, 1));
+                }
+                if (filterSelect) {
+                    filterSelect.addEventListener('change', () => updateConsignmentTable(hubId, 1));
+                }
+            });
+
+            // Auto-refresh
+            setupAutoRefresh();
+
+            // Handle initial hash
+            handleHashChange();
+        }
+
+        // Start the app when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
